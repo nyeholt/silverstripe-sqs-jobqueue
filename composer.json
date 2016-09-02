@@ -1,0 +1,24 @@
+{
+	"name": "silverstripe-australia/silverstripe-sqs-jobqueue",
+	"description": "A module for interacting with AWS's Simple Queue Service (SQS)", 
+	"type": "silverstripe-module",
+	"keywords": ["silverstripe", "sqs", "aws", "queuedjobs"],
+	"license": "BSD-3-Clause",
+	"authors": [
+	{
+		"name": "Marcus Nyeholt",
+		"email": "marcus@silverstripe.com.au"
+	}
+	],
+	"extra": {
+		"installer-name": "sqs-jobqueue",
+		"branch-alias": {
+			"dev-master": "1.0.x-dev"
+		}
+	},
+	"require":
+	{
+		"aws/aws-sdk-php": "~3.0"
+	}
+}
+
