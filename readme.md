@@ -33,3 +33,9 @@ Injector:
       queueName: your-queue-name
 
 ```
+
+## Running
+
+```
+php sqs-jobqueue/sqs-worker.php
+```
