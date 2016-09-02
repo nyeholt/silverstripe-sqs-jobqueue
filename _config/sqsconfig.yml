@@ -1,0 +1,24 @@
+---
+Name: sqs_config
+---
+SqsService:
+  default_tasks:
+    
+Injector:
+  SqsScheduleRunnerJob: 
+    properties:
+      queuedJobService: %$QueuedJobService
+      sqsService: %$SqsService
+  SqsClient:
+    factory: SqsClientFactory
+  QueuedJobRunner:
+    properties:
+      queuedJobService: %$QueuedJobService
+  SqsService:
+    properties:
+      client: %$SqsClient
+      handlers: 
+        runJob: %$QueuedJobRunner
+        processScheduledJobs: %$SqsScheduleRunnerJob
+      defaultTasks:
+        SqsScheduleRunnerJob: processScheduledJobs
