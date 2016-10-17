@@ -87,6 +87,7 @@ $runningFunction = function ($logFunc) {
     while (true) {
         // clear the file system stat cache
         clearstatcache(true);
+        DataObject::flush_and_destroy_cache();
 
         try {
             $executed = $service->readQueue();
