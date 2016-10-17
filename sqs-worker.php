@@ -85,6 +85,9 @@ $runningFunction = function ($logFunc) {
     $logFunc("Running with memory limit of {$max_memory} B");
 
     while (true) {
+        // clear the file system stat cache
+        clearstatcache(true);
+
         try {
             $executed = $service->readQueue();
             if (count($executed)) {
@@ -100,7 +103,6 @@ $runningFunction = function ($logFunc) {
             }
             
             $service->checkScheduledTasks();
-            
         } catch (Exception $ex) {
             echo "Queue read failed (" . get_class($ex) . "): " . $ex->getMessage() . "\n";
             echo $ex->getTraceAsString();
