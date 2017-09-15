@@ -5,6 +5,8 @@
  */
 class FileBasedSqsQueue
 {
+    const SYS_KEY = '__src_system';
+
     public $queuePath;
 
     public function __construct()
@@ -31,6 +33,7 @@ class FileBasedSqsQueue
 
     public function sendMessage($message)
     {
+        $message[self::SYS_KEY] = BASE_PATH;
         $data = json_encode($message);
 
         $path = $this->getQueuePath();
@@ -48,12 +51,13 @@ class FileBasedSqsQueue
             $content = file_get_contents($file);
             if (strlen($content)) {
                 $data = json_decode($content, true);
-                $message = [
-                    'Body' => isset($data['MessageBody']) ? json_encode($data['MessageBody']) : '',
-                    'ReceiptHandle' => $file
-                ];
-                
-                $all->add($message);
+                if (isset($data[self::SYS_KEY]) && $data[self::SYS_KEY] == BASE_PATH) {
+                    $message = [
+                        'Body' => isset($data['MessageBody']) ? json_encode($data['MessageBody']) : '',
+                        'ReceiptHandle' => $file
+                    ];
+                    $all->add($message);
+                }
             }
         }
         return $all;
