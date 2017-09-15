@@ -44,11 +44,6 @@ if(isset($_SERVER['argv'][2])) {
     }
   $_REQUEST = array_merge($_REQUEST, $_GET);
 }
-// Set 'url' GET parameter
-if(isset($_SERVER['argv'][1])) {
-	$_REQUEST['url'] = $_SERVER['argv'][1];
-	$_GET['url'] = $_SERVER['argv'][1];
-}
 
 // flush config before spinning the worker up
 $_GET['flush'] = 1;
@@ -74,20 +69,19 @@ DataModel::set_inst(new DataModel());
 /**
  * Closure to provide a small level of global scope protection
  */
-$runningFunction = function ($logFunc) {
-    
+$runningFunction = function ($logFunc, $perpetual = true) {
+
     $service = Injector::inst()->get('SqsService');
     $max_memory = Config::inst()->get('SqsWorker', 'mem_limit');
     if (!$max_memory) {
         $max_memory = 128 * 1024 * 1024;
     }
-    
+
     $logFunc("Running with memory limit of {$max_memory} B");
 
     while (true) {
         // clear the file system stat cache
         clearstatcache(true);
-        DataObject::flush_and_destroy_cache();
 
         try {
             $executed = $service->readQueue();
@@ -97,29 +91,41 @@ $runningFunction = function ($logFunc) {
                     $memory = memory_get_peak_usage(false);
                     if ($memory > $max_memory) {
                         // break out of the loop
-                        $logFunc("Memory expired: $memory bytes used of $max_memory. Closing for restart"); 
+                        $logFunc("Memory expired: $memory bytes used of $max_memory. Closing for restart");
                         return;
                     }
                 }
             }
-            
-            $service->checkScheduledTasks();
+
+            if ($perpetual) {
+                $service->checkScheduledTasks();
+            }
         } catch (Exception $ex) {
             echo "Queue read failed (" . get_class($ex) . "): " . $ex->getMessage() . "\n";
             echo $ex->getTraceAsString();
             echo "\n";
-            
+
             if (strpos($ex->getMessage(), "Couldn't run query") !== false) {
                 echo "Unrecoverable failure, closing for restart\n";
                 return;
             }
         }
 
+        if (!$perpetual) {
+            break;
+        }
         sleep(6);
     }
 };
 
-$loggingFunction("Started SqsWorker");
-$runningFunction($loggingFunction);
+
+// are we expecting to run forever? Or is this a once-through and die process?
+$perpetual = true;
+if(isset($_SERVER['argv'][1]) && $_SERVER['argv'][1] === 'once') {
+	$perpetual = false;
+}
+
+$loggingFunction("Started SqsWorker " . ($perpetual ? "forever " : "once"));
+$runningFunction($loggingFunction, $perpetual);
 $loggingFunction("SqsWorker shutdown");
 
