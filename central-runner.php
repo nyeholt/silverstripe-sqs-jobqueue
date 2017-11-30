@@ -7,6 +7,7 @@ if (PHP_SAPI !== 'cli') {
 
 const SYS_KEY = '__src_system';
 const SQS_PATH = 'sqs-jobqueue/sqs-worker.php';
+const PER_FILE_THRESHOLD = 5;
 
 $settings = [
     'queuePath' => '/tmp/fake-sqs-queues',
@@ -35,6 +36,9 @@ $runningFunction = function ($logFunc, $path) {
     $executions = 20000;
     $i          = 0;
 
+    // how many times has a file been tried?
+    $fileAttempts = [];
+
     if (is_dir($path)) {
         while ($i++ < $executions) {
             clearstatcache(true);
@@ -43,6 +47,17 @@ $runningFunction = function ($logFunc, $path) {
                 $messages = glob($path.'/*');
                 
                 foreach ($messages as $file) {
+                    $attempts = isset($fileAttempts[$file]) ? $fileAttempts[$file] : 0;
+                    if ($attempts >= PER_FILE_THRESHOLD) {
+                        $logFunc("Failed executing file $file, removing");
+                        unset($fileAttempts[$file]);
+                        if (file_exists($file)) {
+                            @unlink($file);
+                        }
+                        continue;
+                    }
+                    $fileAttempts[$file] = ++$attempts;
+
                     $content = file_get_contents($file);
                     $logFunc("Saw $file ".SYS_KEY . " (in cycle $i )");
                     if (strlen($content)) {
