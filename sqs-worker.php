@@ -96,6 +96,7 @@ $runningFunction = function ($logFunc, $perpetual = true) {
                     }
                 }
             }
+            $logFunc("No jobs found in " . get_class($service->client));
 
             if ($perpetual) {
                 $service->checkScheduledTasks();
