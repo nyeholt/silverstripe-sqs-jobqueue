@@ -53,7 +53,7 @@ class FileBasedSqsQueue
                 $data = json_decode($content, true);
                 if (isset($data[self::SYS_KEY]) && $data[self::SYS_KEY] == BASE_PATH) {
                     $message = [
-                        'Body' => isset($data['MessageBody']) ? json_encode($data['MessageBody']) : '',
+                        'Body' => isset($data['MessageBody']) ? (is_string($data['MessageBody']) ? $data['MessageBody'] : json_encode($data['MessageBody']))  : '',
                         'ReceiptHandle' => $file
                     ];
                     $all->add($message);
