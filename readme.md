@@ -1,3 +1,51 @@
+# SilverStripe SQS job queue
+
+A module for sending and consuming SQS tasks. Can be configured to work as the trigger for queuejobs. 
+
+When used as the queuedjobs handler, there's a few slight changes to how queuedjobs are run - aside from not needing Cron jobs anymore. 
+
+* On calling QueuedJobService->queueJob, a message is sent to SQS
+* A consumer picks up that message, then processes that job ID
+* All "type 1" aka immediate jobs are subsequently processed in that execution thread
+* If the added job is meant to be run in the future, the handler sets the job type to 'Scheduled'. 
+* A separate SQS task runs that looks for any jobs of type "Scheduled" and executes those
+* That task re-queues itself for to run again in 30 seconds time
+* The "Scheduled" task runner will also look for any job currently sitting in the "wait" status; this is how paused jobs get picked up for further execution without needing to trigger another SQS message
+
+## Configuration for use as the queuejobs handler
+
+```
+---
+Name: jobrunner
+After: queuedjobs
+---
+Injector:
+  QueueHandler:
+    class: SqsQueueHandler
+    properties:
+      sqsService: %$SqsService
+  SqsClient:
+    class: Aws\Sqs\SqsClient
+    constructor:
+      connection_details: 
+        region: ap-southeast-2
+        version: latest
+        credentials: 
+          key: YourKey
+          secret: YourSecret
+```
+
+
+That expects a queue to exist with the name 'jobqueue' - if the queue name is different, 
+
+```
+Injector:
+  SqsService:
+    properties:
+      queueName: your-queue-name
+
+```
+
 
 ## Writing a task
 
@@ -64,40 +112,6 @@ $sqsMessage = [
 So, to manually trigger the messages, create the `$sqsMessage` structure from
 your own code, and send using `$this->client->sendMessage($sqsMessage);`
 
-
-## Config
-
-```
----
-Name: jobrunner
-After: queuedjobs
----
-Injector:
-  QueueHandler:
-    class: SqsQueueHandler
-    properties:
-      sqsService: %$SqsService
-  SqsClient:
-    class: Aws\Sqs\SqsClient
-    constructor:
-      connection_details: 
-        region: ap-southeast-2
-        version: latest
-        credentials: 
-          key: YourKey
-          secret: YourSecret
-```
-
-
-That expects a queue to exist with the name 'jobqueue' - if the queue name is different, 
-
-```
-Injector:
-  SqsService:
-    properties:
-      queueName: your-queue-name
-
-```
 
 ## Running
 
