@@ -44,7 +44,7 @@ class SqsScheduleRunnerJob implements SqsIntervalTask {
         if (!$processedWaiting) {
             $jobs = QueuedJobDescriptor::get()->filter(array(
                 'JobStatus' => array(QueuedJob::STATUS_NEW, QueuedJob::STATUS_WAIT),
-                'JobType'       => 'Scheduled',
+                'JobType'       =>  SqsQueuedJobExtension::TYPE_SCHEDULED,
                 'Implementation:not' => 'SqsScheduleRunnerJob',
                 'StartAfter:LessThan' => SS_DateTime::now()->getValue()
             ));
