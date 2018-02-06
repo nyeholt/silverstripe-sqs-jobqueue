@@ -3,6 +3,10 @@ Name: sqs_config
 ---
 SqsService:
   default_tasks:
+
+QueuedJobsAdmin:
+  extensions:
+    - SqsQueuedJobExtension
     
 Injector:
   SqsScheduleRunnerJob: 
