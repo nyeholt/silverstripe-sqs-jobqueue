@@ -10,7 +10,7 @@ const SQS_PATH = 'sqs-jobqueue/sqs-worker.php';
 const PER_FILE_THRESHOLD = 5;
 
 $settings = [
-    'queuePath' => '/tmp/fake-sqs-queues',
+    'queuePath' => __DIR__.'/fake-queue',
 ];
 
 $localConfig = __DIR__.'/runner-settings.php';
