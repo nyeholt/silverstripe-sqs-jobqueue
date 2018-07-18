@@ -51,6 +51,21 @@ class FileBasedSqsQueue
             $content = file_get_contents($file);
             if (strlen($content)) {
                 $data = json_decode($content, true);
+
+                //if message has delay
+                if(isset($data["DelaySeconds"])) {
+                    //get file age
+                    $time_created = filectime($file);
+                    $time_now = strtotime(date("Y-m-d H:i:s"));
+                    $time_alive = $time_now - $time_created;
+
+                    //if too young, skip message
+                    if($time_alive < $data["DelaySeconds"]) {
+                        echo "[2018-07-18 xx:xx:xx] File too young (".$time_alive."/".$data["DelaySeconds"].")\n";
+                        continue;
+                    }
+                }
+
                 if (isset($data[self::SYS_KEY]) && $data[self::SYS_KEY] == BASE_PATH) {
                     $message = [
                         'Body' => isset($data['MessageBody']) ? (is_string($data['MessageBody']) ? $data['MessageBody'] : json_encode($data['MessageBody']))  : '',
