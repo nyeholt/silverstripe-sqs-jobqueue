@@ -7,7 +7,7 @@ if (PHP_SAPI !== 'cli') {
 
 const SYS_KEY = '__src_system';
 const SQS_PATH = 'sqs-jobqueue/sqs-worker.php';
-const PER_FILE_THRESHOLD = 5;
+const PER_FILE_THRESHOLD = 13;
 
 $settings = [
     'queuePath' => __DIR__.'/fake-queue',
