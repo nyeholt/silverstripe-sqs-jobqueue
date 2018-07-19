@@ -19,6 +19,13 @@ if (file_exists($localConfig)) {
     $settings = array_replace_recursive($settings, $local);
 }
 
+// ie. Linux - sys_get_temp_dir() - /tmp
+// ie. Windows - sys_get_temp_dir() - C:\Users\USERNAME_HERE\AppData\Local\Temp
+$settings['queuePath'] = str_replace('/tmp', sys_get_temp_dir(), $settings['queuePath']);
+
+if (!file_exists($settings['queuePath'])) {
+    mkdir($settings['queuePath'], 02770, true);
+}
 
 $loggingFunction = function ($message) {
     echo "[" . date('Y-m-d H:i:s') . "] " . $message ."\n";
@@ -40,6 +47,7 @@ $runningFunction = function ($logFunc, $path) {
     $fileAttempts = [];
 
     if (is_dir($path)) {
+        $logFunc("Watching: {$path}");
         while ($i++ < $executions) {
             clearstatcache(true);
             try {

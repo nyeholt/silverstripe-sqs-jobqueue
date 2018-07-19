@@ -19,6 +19,9 @@ class FileBasedSqsQueue
         if (!$this->queuePath) {
             $this->queuePath = __DIR__.'/.queues';
         }
+        // ie. Linux - sys_get_temp_dir() - /tmp
+        // ie. Windows - sys_get_temp_dir() - C:\Users\USERNAME_HERE\AppData\Local\Temp
+        $this->queuePath = str_replace('/tmp', sys_get_temp_dir(), $this->queuePath);
         if (!is_dir($this->queuePath)) {
             mkdir($this->queuePath, 02770, true);
         }
