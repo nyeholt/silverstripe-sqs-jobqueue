@@ -38,7 +38,7 @@ class FileBasedSqsQueue
 
         $path = $this->getQueuePath();
 
-        $name = md5($data);
+        $name = uniqid(md5($data)."_");
 
         file_put_contents($path.'/'.$name, $data);
     }
@@ -61,7 +61,6 @@ class FileBasedSqsQueue
 
                     //if too young, skip message
                     if($time_alive < $data["DelaySeconds"]) {
-                        echo "[2018-07-18 xx:xx:xx] File too young (".$time_alive."/".$data["DelaySeconds"].")\n";
                         continue;
                     }
                 }
