@@ -1,17 +1,30 @@
 #!/usr/bin/php
 <?php
-/**
- * Ensure that people can't access this from a web-server
- */
-if(isset($_SERVER['HTTP_HOST'])) {
-	echo "cli-script.php can't be run from a web request, you have to run it on the command-line.";
-	die();
+
+// CLI specific bootstrapping
+use SilverStripe\Control\CLIRequestBuilder;
+use SilverStripe\Control\HTTPApplication;
+use SilverStripe\Core\CoreKernel;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
+
+use Symbiote\SqsJobQueue\Service\SqsService;
+use Symbiote\SqsJobQueue\Service\FileBasedSqsQueue;
+
+require dirname(__DIR__) . '/vendor/silverstripe/framework/src/includes/autoload.php';
+
+// Ensure that people can't access this from a web-server
+if (!in_array(PHP_SAPI, ["cli"])) {
+    echo "cli-script.php can't be run from a web request, you have to run it on the command-line.";
+    die();
 }
-/**
- * Identify the cli-script.php file and change to its container directory, so that require_once() works
- */
-$_SERVER['SCRIPT_FILENAME'] = __FILE__;
-chdir(dirname(dirname($_SERVER['SCRIPT_FILENAME'])) . '/framework');
+
+// Build request and detect flush
+$request = CLIRequestBuilder::createFromEnvironment();
+
+// Default application
+$kernel = new CoreKernel(BASE_PATH);
+$kernel->boot(true);
 
 $loggingFunction = function ($message) {
     echo "[" . date('Y-m-d H:i:s') . "] " . $message ."\n";
@@ -45,33 +58,15 @@ if(isset($_SERVER['argv'][2])) {
   $_REQUEST = array_merge($_REQUEST, $_GET);
 }
 
-// flush config before spinning the worker up
-$_GET['flush'] = 1;
 
 $loggingFunction("Initialising SqsWorker");
-
-/**
- * Include SilverStripe's core code
- */
-require_once("core/Core.php");
-global $databaseConfig;
-// We don't have a session in cli-script, but this prevents errors
-$_SESSION = null;
-// Connect to database
-require_once("model/DB.php");
-DB::connect($databaseConfig);
-// Get the request URL from the querystring arguments
-$_SERVER['REQUEST_URI'] = BASE_URL;
-// Direct away - this is the "main" function, that hands control to the apporopriate controller
-DataModel::set_inst(new DataModel());
-
 
 /**
  * Closure to provide a small level of global scope protection
  */
 $runningFunction = function ($logFunc, $perpetual = true) {
 
-    $service = Injector::inst()->get('SqsService');
+    $service = Injector::inst()->get(SqsService::class);
     $max_memory = Config::inst()->get('SqsWorker', 'mem_limit');
     if (!$max_memory) {
         $max_memory = 128 * 1024 * 1024;
@@ -84,6 +79,9 @@ $runningFunction = function ($logFunc, $perpetual = true) {
         clearstatcache(true);
 
         try {
+            if ($service->client instanceof FileBasedSqsQueue) {
+                $logFunc("Looking for jobs in " . $service->client->queuePath);
+            }
             $executed = $service->readQueue();
             if (count($executed)) {
                 foreach ($executed as $job) {
@@ -96,7 +94,11 @@ $runningFunction = function ($logFunc, $perpetual = true) {
                     }
                 }
             }
-            $logFunc("No jobs found in " . get_class($service->client));
+
+
+
+            $fileLoc = $service->client instanceof FileBasedSqsQueue ? $service->client->queuePath : '';
+            $logFunc("No jobs found in " . get_class($service->client) . ': ' . $fileLoc);
 
             if ($perpetual) {
                 $service->checkScheduledTasks();

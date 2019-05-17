@@ -82,15 +82,15 @@ Injector:
 
 To trigger a task, the call
 
-`$sqsService->sendSqsMessage(['args' => ['param1', 'param2']], 'doStuff');` 
+`$sqsService->sendSqsMessage(['args' => ['param1', 'param2']], 'taskName');` 
 
 for convenience, SqsService implements a `__call()` method that remaps a call like
 
-`$sqsService->doStuff($arg1, $arg2)` 
+`$sqsService->taskName($arg1, $arg2)` 
 
 into 
 
-`$sqsService->sendSqsMessage(['args' => [$arg1, $arg2']], 'doStuff');`
+`$sqsService->sendSqsMessage(['args' => [$arg1, $arg2']], 'taskName');`
 
 `sendSqsMessage` in turn converts this into a message structure such as
 
@@ -98,7 +98,7 @@ into
 $message = [
     'message' => [
         'args' => [$arg1, $arg2'],
-        'handler' => 'doStuff',
+        'handler' => 'taskName',
     ]
 ];
 

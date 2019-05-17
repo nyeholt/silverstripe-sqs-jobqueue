@@ -1,30 +1,46 @@
 <?php
 
+namespace Symbiote\SqsJobQueue\Control;
+
+
+use SilverStripe\Forms\GridField\GridFieldAddNewButton;
+use SilverStripe\Forms\GridField\GridFieldDeleteAction;
+use SilverStripe\Forms\ReadonlyField;
+use SilverStripe\Forms\FormAction;
+use SilverStripe\Forms\Form;
+use SilverStripe\Admin\ModelAdmin;
+
+use Symbiote\SqsJobQueue\Model\SqsQueueState;
+use Symbiote\SqsJobQueue\Job\SqsScheduleRunnerJob;
+use Symbiote\SqsJobQueue\Service\SqsService;
+
+
+
 /**
  * @author marcus
  */
 class SqsAdmin extends ModelAdmin {
     private static $url_segment = 'sqsadmin';
-    private static $managed_models = array('SqsQueueState');
+    private static $managed_models = array(SqsQueueState::class);
     private static $menu_title = 'SQS';
     
     public function getEditForm($id = null, $fields = null) {
         $form = parent::getEditForm($id, $fields);
         
-        if ($this->modelClass == 'SqsQueueState') {
+        if ($this->modelClass == SqsQueueState::class) {
             // remove the 'add' buttons from the list, and ensure there's at least one in 
             // existence
-            $grid = $form->Fields()->dataFieldByName('SqsQueueState');
+            $grid = $form->Fields()->dataFieldByName(SqsQueueState::class);
             if ($grid) {
-                $grid->getConfig()->removeComponentsByType('GridFieldAddNewButton');
-                $grid->getConfig()->removeComponentsByType('GridFieldDeleteAction');
+                $grid->getConfig()->removeComponentsByType(GridFieldAddNewButton::class);
+                $grid->getConfig()->removeComponentsByType(GridFieldDeleteAction::class);
             }
             
-            $sqs = SqsQueueState::get()->filter('Title', 'SqsScheduleRunnerJob')->first();
+            $sqs = SqsQueueState::get()->filter('Title', SqsScheduleRunnerJob::class)->first();
             if (!$sqs) {
                 $sqs = SqsQueueState::create();
                 $sqs->update(array(
-                    'Title' => 'SqsScheduleRunnerJob'
+                    'Title' => SqsScheduleRunnerJob::class
                 ));
                 $sqs->write();
             }
@@ -52,7 +68,7 @@ class SqsAdmin extends ModelAdmin {
     }
     
     public function triggerSqsJob($data, Form $form) {
-        singleton('SqsService')->checkScheduledTasks();
+        singleton(SqsService::class)->checkScheduledTasks();
         return $this->redirectBack();
     }
 }
