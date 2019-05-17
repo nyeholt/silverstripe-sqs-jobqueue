@@ -1,0 +1,13 @@
+mappings:
+  SqsAdmin: Symbiote\SqsJobQueue\Control\SqsAdmin
+  SqsQueuedJobExtension: Symbiote\SqsJobQueue\Extension\SqsQueuedJobExtension
+  SqsScheduleRunnerJob: Symbiote\SqsJobQueue\Job\SqsScheduleRunnerJob
+  SqsQueueState: Symbiote\SqsJobQueue\Model\SqsQueueState
+  QueuedJobRunner: Symbiote\SqsJobQueue\Service\QueuedJobRunner
+  SqsService: Symbiote\SqsJobQueue\Service\SqsService
+  SqsClientFactory: Symbiote\SqsJobQueue\Service\SqsClientFactory
+  FileBasedSqsQueue: Symbiote\SqsJobQueue\Service\FileBasedSqsQueue
+  FileBasedSqsMessageList: Symbiote\SqsJobQueue\Service\FileBasedSqsMessageList
+  SqsQueueHandler: Symbiote\SqsJobQueue\Service\SqsQueueHandler
+  SqsIntervalTask: Symbiote\SqsJobQueue\Task\SqsIntervalTask
+  CreateScheduledRunnerTask: Symbiote\SqsJobQueue\Task\CreateScheduledRunnerTask

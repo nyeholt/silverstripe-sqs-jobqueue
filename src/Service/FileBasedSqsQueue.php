@@ -1,5 +1,10 @@
 <?php
 
+namespace Symbiote\SqsJobQueue\Service;
+
+
+
+
 /**
  * @author marcus
  */
@@ -38,7 +43,7 @@ class FileBasedSqsQueue
 
         $path = $this->getQueuePath();
 
-        $name = uniqid(md5($data)."_");
+        $name = md5($data);
 
         file_put_contents($path.'/'.$name, $data);
     }
@@ -51,20 +56,6 @@ class FileBasedSqsQueue
             $content = file_get_contents($file);
             if (strlen($content)) {
                 $data = json_decode($content, true);
-
-                //if message has delay
-                if(isset($data["DelaySeconds"])) {
-                    //get file age
-                    $time_created = filectime($file);
-                    $time_now = strtotime(date("Y-m-d H:i:s"));
-                    $time_alive = $time_now - $time_created;
-
-                    //if too young, skip message
-                    if($time_alive < $data["DelaySeconds"]) {
-                        continue;
-                    }
-                }
-
                 if (isset($data[self::SYS_KEY]) && $data[self::SYS_KEY] == BASE_PATH) {
                     $message = [
                         'Body' => isset($data['MessageBody']) ? (is_string($data['MessageBody']) ? $data['MessageBody'] : json_encode($data['MessageBody']))  : '',

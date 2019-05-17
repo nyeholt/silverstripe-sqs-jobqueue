@@ -1,22 +1,36 @@
 <?php
 
+namespace Symbiote\SqsJobQueue\Job;
+
+
+use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
+use Symbiote\QueuedJobs\Services\QueuedJob;
+
+
+use SilverStripe\ORM\FieldType\DBDatetime;
+use Symbiote\SqsJobQueue\Job\SqsScheduleRunnerJob;
+use Symbiote\SqsJobQueue\Extension\SqsQueuedJobExtension;
+use Symbiote\SqsJobQueue\Task\SqsIntervalTask;
+
+
+
 /**
  * A job that executes _scheduled_ jobs in an environment
  * where simple queues exist that don't allow long term scheduling of jobs,
- * such as SQS 
- * 
+ * such as SQS
+ *
  * @author marcus
  */
 class SqsScheduleRunnerJob implements SqsIntervalTask {
-    
+
     const SCHEDULE_TIME = 45;
-    
+
     /**
      *
      * @var QueuedJobService
      */
     public $queuedJobService;
-    
+
     /**
      *
      * @var SqsService
@@ -26,15 +40,14 @@ class SqsScheduleRunnerJob implements SqsIntervalTask {
 
     public function processScheduledJobs() {
         $this->queuedJobService->checkJobHealth();
-        $this->queuedJobService->checkdefaultJobs();
 
         $processedWaiting = false;
         // run waiting jobs that haven't been re-added to the queue
         $jobs = QueuedJobDescriptor::get()->filter(array(
             'JobStatus' => array(QueuedJob::STATUS_WAIT),
-            'Implementation:not' => 'SqsScheduleRunnerJob',
+            'Implementation:not' => SqsScheduleRunnerJob::class,
         ));
-        
+
         foreach ($jobs as $job) {
             $processedWaiting = true;
             // bombs away!
@@ -46,8 +59,8 @@ class SqsScheduleRunnerJob implements SqsIntervalTask {
             $jobs = QueuedJobDescriptor::get()->filter(array(
                 'JobStatus' => array(QueuedJob::STATUS_NEW, QueuedJob::STATUS_WAIT),
                 'JobType'       =>  SqsQueuedJobExtension::TYPE_SCHEDULED,
-                'Implementation:not' => 'SqsScheduleRunnerJob',
-                'StartAfter:LessThan' => SS_DateTime::now()->getValue()
+                'Implementation:not' => SqsScheduleRunnerJob::class,
+                'StartAfter:LessThan' => DBDatetime::now()->getValue()
             ));
 
             foreach ($jobs as $job) {
@@ -65,7 +78,7 @@ class SqsScheduleRunnerJob implements SqsIntervalTask {
 
     public function getTaskName()
     {
-        return 'SqsScheduleRunnerJob';
+        return SqsScheduleRunnerJob::class;
     }
 
 }

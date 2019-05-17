@@ -1,5 +1,14 @@
 <?php
 
+namespace Symbiote\SqsJobQueue\Service;
+
+
+use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
+
+use Symbiote\SqsJobQueue\Extension\SqsQueuedJobExtension;
+
+
+
 /**
  *
  * @author marcus

@@ -1,5 +1,13 @@
 <?php
 
+namespace Symbiote\SqsJobQueue\Service;
+
+
+use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
+use Symbiote\QueuedJobs\Services\QueuedJob;
+
+
+
 /**
  * A shell around QueuedJobService that performs some additional sanity checks before
  * executing things. 

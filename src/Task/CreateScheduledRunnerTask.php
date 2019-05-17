@@ -1,5 +1,14 @@
 <?php
 
+namespace Symbiote\SqsJobQueue\Task;
+
+
+use SilverStripe\Dev\BuildTask;
+use Symbiote\SqsJobQueue\Service\SqsService;
+
+
+
+
 /**
  * @author marcus
  */
@@ -11,7 +20,7 @@ class CreateScheduledRunnerTask extends BuildTask {
             return;
         }
         
-        $sqs = singleton('SqsService');
+        $sqs = singleton(SqsService::class);
 
         $sqs->sendSqsMessage('Scheduled Job Runner', 'processScheduledJobs', 5);
     }
