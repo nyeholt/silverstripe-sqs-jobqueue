@@ -7,10 +7,10 @@ if (PHP_SAPI !== 'cli') {
 
 const SYS_KEY = '__src_system';
 const SQS_PATH = 'sqs-jobqueue/sqs-worker.php';
-const PER_FILE_THRESHOLD = 13;
+const PER_FILE_THRESHOLD = 5;
 
 $settings = [
-    'queuePath' => __DIR__.'/fake-queue',
+    'queuePath' => '/tmp/fake-sqs-queues',
 ];
 
 $localConfig = __DIR__.'/runner-settings.php';
@@ -45,7 +45,7 @@ $runningFunction = function ($logFunc, $path) {
             try {
 
                 $messages = glob($path.'/*');
-                
+
                 foreach ($messages as $file) {
                     $attempts = isset($fileAttempts[$file]) ? $fileAttempts[$file] : 0;
                     if ($attempts >= PER_FILE_THRESHOLD) {
@@ -65,7 +65,7 @@ $runningFunction = function ($logFunc, $path) {
                         $sqsCmd = $data[SYS_KEY].'/'.SQS_PATH;
                         if (isset($data[SYS_KEY]) && file_exists($data[SYS_KEY].'/'.SQS_PATH)) {
 
-                            $cmd = "php ".$data[SYS_KEY].'/'.SQS_PATH.' once';
+                            $cmd = "php ".$data[SYS_KEY].'/'.SQS_PATH.' once=1';
 
                             $logFunc("Executing $cmd");
 

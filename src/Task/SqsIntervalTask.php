@@ -1,5 +1,10 @@
 <?php
 
+namespace Symbiote\SqsJobQueue\Task;
+
+
+
+
 /**
  * @author marcus
  */
