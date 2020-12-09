@@ -1,28 +1,35 @@
 ---
 Name: sqs_config
 ---
-SqsService:
-  default_tasks:
-
-QueuedJobsAdmin:
+Symbiote\SqsJobQueue\Service\SqsService:
+  default_tasks: null
+Symbiote\QueuedJobs\Controllers\QueuedJobsAdmin:
   extensions:
-    - SqsQueuedJobExtension
-    
-Injector:
-  SqsScheduleRunnerJob: 
+    - Symbiote\SqsJobQueue\Extension\SqsQueuedJobExtension
+SilverStripe\Core\Injector\Injector:
+  SqsScheduleRunnerJob:
+    class: Symbiote\SqsJobQueue\Job\SqsScheduleRunnerJob
     properties:
-      queuedJobService: %$QueuedJobService
-      sqsService: %$SqsService
+      queuedJobService: '%$Symbiote\QueuedJobs\Services\QueuedJobService'
+      sqsService: '%$Symbiote\SqsJobQueue\Service\SqsService'
   SqsClient:
-    factory: SqsClientFactory
+    factory: Symbiote\SqsJobQueue\Service\SqsClientFactory
   QueuedJobRunner:
+    class: Symbiote\SqsJobQueue\Service\QueuedJobRunner
     properties:
-      queuedJobService: %$QueuedJobService
-  SqsService:
+      queuedJobService: '%$Symbiote\QueuedJobs\Services\QueuedJobService'
+  Symbiote\SqsJobQueue\Service\SqsService:
     properties:
-      client: %$SqsClient
-      handlers: 
-        runJob: %$QueuedJobRunner
-        processScheduledJobs: %$SqsScheduleRunnerJob
+      client: '%$SqsClient'
+      handlers:
+        runJob: '%$QueuedJobRunner'
+        processScheduledJobs: '%$SqsScheduleRunnerJob'
       defaultTasks:
         SqsScheduleRunnerJob: processScheduledJobs
+
+---
+name: sqs-routes
+---
+SilverStripe\Control\Director:
+  rules:
+    sqs-runner: Symbiote\SqsJobQueue\Control\SqsRunnerController

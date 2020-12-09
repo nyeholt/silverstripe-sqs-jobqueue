@@ -1,6 +1,6 @@
 {
 	"name": "symbiote/silverstripe-sqs-jobqueue",
-	"description": "A module for interacting with AWS's Simple Queue Service (SQS)", 
+	"description": "A module for interacting with AWS's Simple Queue Service (SQS)",
 	"type": "silverstripe-module",
 	"keywords": ["symbiote", "thrive", "silverstripe", "sqs", "aws", "queuedjobs"],
 	"license": "BSD-3-Clause",
@@ -10,10 +10,15 @@
 		"email": "marcus@symbiote.com.au"
 	}
 	],
+    "autoload": {
+        "psr-4": {
+            "Symbiote\\SqsJobQueue\\": "src/"
+        }
+    },
 	"extra": {
 		"installer-name": "sqs-jobqueue",
 		"branch-alias": {
-			"dev-master": "2.2.x-dev"
+			"dev-master": "3.2.x-dev"
 		}
 	},
 	"require":

@@ -19,9 +19,9 @@ When used as the queuedjobs handler, there's a few slight changes to how queuedj
 Name: jobrunner
 After: queuedjobs
 ---
-Injector:
+SilverStripe\Core\Injector\Injector:
   QueueHandler:
-    class: SqsQueueHandler
+    class: Symbiote\SqsJobQueue\Service\SqsQueueHandler
     properties:
       sqsService: %$SqsService
   SqsClient:
@@ -39,7 +39,7 @@ Injector:
 That expects a queue to exist with the name 'jobqueue' - if the queue name is different, 
 
 ```
-Injector:
+SilverStripe\Core\Injector\Injector:
   SqsService:
     properties:
       queueName: your-queue-name
@@ -69,7 +69,7 @@ class Work {
 Add configuration to your project that binds the method name to the SqsService
 
 ```yml
-Injector:
+SilverStripe\Core\Injector\Injector:
   MyJobName: 
     class: \Whatever\Class\Implements\Work
   SqsService:
@@ -82,15 +82,15 @@ Injector:
 
 To trigger a task, the call
 
-`$sqsService->sendSqsMessage(['args' => ['param1', 'param2']], 'doStuff');` 
+`$sqsService->sendSqsMessage(['args' => ['param1', 'param2']], 'taskName');` 
 
 for convenience, SqsService implements a `__call()` method that remaps a call like
 
-`$sqsService->doStuff($arg1, $arg2)` 
+`$sqsService->taskName($arg1, $arg2)` 
 
 into 
 
-`$sqsService->sendSqsMessage(['args' => [$arg1, $arg2']], 'doStuff');`
+`$sqsService->sendSqsMessage(['args' => [$arg1, $arg2']], 'taskName');`
 
 `sendSqsMessage` in turn converts this into a message structure such as
 
@@ -98,7 +98,7 @@ into
 $message = [
     'message' => [
         'args' => [$arg1, $arg2'],
-        'handler' => 'doStuff',
+        'handler' => 'taskName',
     ]
 ];
 
@@ -130,12 +130,12 @@ out the AWS queue for the file based SQS queue.
 Name: local_sqs_config
 After: sqs-jobqueue
 ---
-Injector:
+SilverStripe\Core\Injector\Injector:
   SqsService:
     properties:
       client: %$FileSqsClient
   FileSqsClient:
-    class: FileBasedSqsQueue
+    class: Symbiote\SqsJobQueue\Service\FileBasedSqsQueue
 
 ```
 

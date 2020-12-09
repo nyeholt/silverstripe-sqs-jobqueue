@@ -1,10 +1,22 @@
 <?php
 
+namespace Symbiote\SqsJobQueue\Service;
+
+
+use SilverStripe\ORM\FieldType\DBDatetime;
+use Exception;
+
+
+use Symbiote\SqsJobQueue\Model\SqsQueueState;
+use Symbiote\SqsJobQueue\Task\SqsIntervalTask;
+
+
+
 /**
  * @author marcus
  */
 class SqsService {
-    
+
     const MAX_DEPTH = 10;
 
     /**
@@ -14,23 +26,23 @@ class SqsService {
     public $client;
     public $queueName = 'jobqueue';
     public $queueUrl;
-    
+
 
     /**
-     * A map of handlers for messages that get sent. maps the message name to the 
+     * A map of handlers for messages that get sent. maps the message name to the
      * object that handles that message (as a method)
      *
      * @var array
      */
     public $handlers = array();
-    
+
     /**
      * The list of tasks that the system will track as being regularly self triggered
      *
      * @var array
      */
     public $defaultTasks = array();
-    
+
     public function __call($name, $arguments) {
         $message = array('args' => $arguments);
         return $this->sendSqsMessage($message, $name);
@@ -82,7 +94,7 @@ class SqsService {
                 // Do something with the message
                 $messageBody = $message['Body'];
                 $data = json_decode($message['Body'], true);
-                
+
                 if ($data && isset($data['handler'])) {
                     if (isset($data['message'])) {
                         $this->updateTaskState($data['message']);
@@ -100,14 +112,14 @@ class SqsService {
                         'name' => get_class($handler),
                         'method'    => $message['Body'],
                     );
-                    
+
                     try {
-                        // check whether this handler should be restarted; we add immediately 
+                        // check whether this handler should be restarted; we add immediately
                         // so that any task specific failure doesn't stop the _next_ run
                         if ($this->canRestartTask($handler)) {
                             $this->sendSqsMessage($handler->getTaskName(), $method, $handler->getInterval());
                         }
-                        
+
                         call_user_func_array(array($handler, $method), $args);
                     } catch (Exception $ex) {
                         $workException = $ex;
@@ -118,12 +130,12 @@ class SqsService {
                     'QueueUrl' => $this->getQueueUrl(),
                     'ReceiptHandle' => $message['ReceiptHandle'],
                 ));
-                
+
                 if ($workException) {
                     throw $workException;
                 }
             }
-            
+
             // if we had a message body, let's look for it again
             if ($messageBody) {
                 $moreJobs = $this->readQueue($number);
@@ -137,7 +149,7 @@ class SqsService {
 
     /**
      * Update the run-record state of a given task, if it tracks running time
-     * 
+     *
      * @param string $name
      */
     protected function updateTaskState($name) {
@@ -149,18 +161,23 @@ class SqsService {
             unset($state);
         }
     }
-    
+
     /**
      * Check a task to see if it should be re-added to the execution queue
-     * 
+     *
      * Returns a boolean indicating whether the task should be re-added to SQS
-     * 
+     *
      * @return boolean
      */
     protected function canRestartTask($task) {
         if ($task instanceof SqsIntervalTask) {
             $state = SqsQueueState::get()->filter('Title', $task->getTaskName())->first();
-            $now = SS_Datetime::now()->Format('Y-m-d H:i:s');
+
+            // NOTE(Marcus) 2018-08-18
+            //
+            // Fix this with corrected date format; on a plane right now,
+            // can't look up the various options
+            $now = date('Y-m-d H:i:s'); //  DBDatetime::now()->Format('Y-m-d H:i:s');
             if ($state && $state->ID) {
                 // check if "now" is _less_ than the delay time, meaning we shouldn't be running, possibly because
                 // multiple versions of this task got added to the queue
@@ -177,17 +194,17 @@ class SqsService {
             $state->write();
             return true;
         }
-        
+
         return false;
     }
-    
+
     /**
      * Checks through all the scheduled tasks that are expected to exist
      */
     public function checkScheduledTasks() {
         if (count($this->defaultTasks)) {
-            $now = SS_Datetime::now()->Format('Y-m-d H:i:s');
-        
+            $now = DBDatetime::now()->Format(DBDatetime::ISO_DATETIME);
+
             foreach ($this->defaultTasks as $task => $method) {
                 $state = SqsQueueState::get()->filter('Title', $task)->first();
 
@@ -198,13 +215,13 @@ class SqsService {
                     ));
                     $new = true;
                     $state->write();
-                } 
+                }
 
-                // let's see if the dates are okay. 
+                // let's see if the dates are okay.
                 $lastQueueRun = strtotime($state->WorkerRun);
                 $lastScheduleRun = strtotime($state->LastScheduledStart);
                 $lastAdded = strtotime($state->LastAddedScheduleJob);
-                
+
                 $a = $state->WorkerRun;
                 $b = $state->LastScheduledStart;
 
@@ -218,7 +235,7 @@ class SqsService {
             }
         }
     }
-    
+
     public function handleCall($args) {
         if (!count($args)) {
             return;
