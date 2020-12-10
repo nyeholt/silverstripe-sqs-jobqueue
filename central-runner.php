@@ -6,11 +6,11 @@ if (PHP_SAPI !== 'cli') {
 }
 
 const SYS_KEY = '__src_system';
-const SQS_PATH = 'sqs-jobqueue/sqs-worker.php';
+const SQS_PATH = 'vendor/symbiote/silverstripe-sqs-jobqueue/sqs-worker.php';
 const PER_FILE_THRESHOLD = 5;
 
 $settings = [
-    'queuePath' => '/tmp/fake-sqs-queues',
+    'queuePath' => '/var/www/html/mysite/fake-sqs-queues',
 ];
 
 $localConfig = __DIR__.'/runner-settings.php';

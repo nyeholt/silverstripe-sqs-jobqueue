@@ -139,7 +139,7 @@ class SqsService {
             // if we had a message body, let's look for it again
             if ($messageBody) {
                 $moreJobs = $this->readQueue($number);
-                if (count($moreJobs)) {
+                if ($moreJobs && count($moreJobs)) {
                     $jobs = array_merge($jobs, $moreJobs);
                 }
             }
