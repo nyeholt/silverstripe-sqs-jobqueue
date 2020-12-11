@@ -37,7 +37,7 @@ class SqsRunnerController extends Controller
                 $logFunc("Looking for jobs in " . $service->client->queuePath);
             }
             $executed = $service->readQueue();
-            if (count($executed)) {
+            if ($executed && count($executed)) {
                 foreach ($executed as $job) {
                     $logFunc("Ran {$job['name']} - {$job['method']}");
                     $memory = memory_get_peak_usage(false);

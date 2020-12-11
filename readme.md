@@ -116,7 +116,7 @@ your own code, and send using `$this->client->sendMessage($sqsMessage);`
 ## Running
 
 ```
-php sqs-jobqueue/sqs-worker.php
+php vendor/symbiote/silverstripe-sqs-jobqueue/sqs-worker.php
 ```
 
 
@@ -142,4 +142,79 @@ SilverStripe\Core\Injector\Injector:
 By default, this will create serialised data in sqs-jobqueue/code/service/.queueus (configurable
 on the FileBasedSqsQueue class). 
 
-Run sqs-worker as before. 
+Run sqs-worker as before.
+
+### Docker
+
+If you're using https://github.com/symbiote/docker-runtime, this will spin up an `sqsrunner` container for you that runs the sqs-worker automatically.
+
+### Troubleshooting
+
+So for a project, your config may look something like this where it defaults to the file-based queue system only for test environments:
+
+```
+---
+Name: prod_sqs
+After: sqs-jobqueue
+---
+SilverStripe\Core\Injector\Injector:
+  Symbiote\SqsJobQueue\Service\SqsService:
+    properties:
+      client: '%$SqsClient'
+  SqsClient:
+    class: Aws\Sqs\SqsClient
+    constructor:
+      connection_details:
+        region: ap-southeast-2
+        version: latest
+---
+Name: dev_sqs
+After: sqs-jobqueue
+Only:
+  environment: test
+---
+SilverStripe\Core\Injector\Injector:
+  Symbiote\SqsJobQueue\Service\SqsService:
+    properties:
+      client: '%$Symbiote\SqsJobQueue\Service\FileBasedSqsQueue'
+```
+
+In the production environment you will still need to provide the `credentials` using local config.
+
+To get the file-based queue system working, your local config will need something like this:
+
+```
+---
+Name: jobrunner
+After: 
+  - queuedjobs
+---
+SilverStripe\Core\Injector\Injector:
+  QueueHandler:
+    class: Symbiote\SqsJobQueue\Service\SqsQueueHandler
+    properties:
+      sqsService: %$Symbiote\SqsJobQueue\Service\SqsService
+  Symbiote\SqsJobQueue\Service\SqsService:
+    properties:
+      queueName: %sqs_jobqueue_name%
+---
+Name: sqs_location
+After:
+  - sqs-jobqueue
+---
+SilverStripe\Core\Injector\Injector:
+  Symbiote\SqsJobQueue\Service\FileBasedSqsQueue:
+    properties:
+      queuePath: /var/www/html/mysite/fake-sqs-queues
+```
+
+The important part is making sure `/var/www/html/mysite/fake-sqs-queues` is writable since that's where your queued jobs will be written to.
+
+#### Docker Testing
+
+The simplest way to test this once all your configs are in place is to:
+
+* Queue up a job (e.g. using the https://github.com/symbiote/silverstripe-queuedjobs/ module)
+* Ensure a file is written to `/var/www/html/mysite/fake-sqs-queues`
+* Run `docker logs sqsrunner` to see whether it picked up the job
+* View the queued jobs admin to ensure the job was completed

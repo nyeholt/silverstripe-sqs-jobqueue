@@ -6,7 +6,7 @@ use SilverStripe\Control\CLIRequestBuilder;
 use SilverStripe\Control\HTTPApplication;
 use SilverStripe\Core\CoreKernel;
 
-require dirname(__DIR__) . '/vendor/silverstripe/framework/src/includes/autoload.php';
+require dirname(__DIR__) . '/../silverstripe/framework/src/includes/autoload.php';
 
 // Ensure that people can't access this from a web-server
 if (!in_array(PHP_SAPI, ["cli"])) {
