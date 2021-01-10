@@ -128,7 +128,7 @@ out the AWS queue for the file based SQS queue.
 ```
 ---
 Name: local_sqs_config
-After: sqs-jobqueue
+After: '#sqs_config'
 ---
 SilverStripe\Core\Injector\Injector:
   SqsService:
@@ -155,7 +155,7 @@ So for a project, your config may look something like this where it defaults to 
 ```
 ---
 Name: prod_sqs
-After: sqs-jobqueue
+After: '#sqs_config'
 ---
 SilverStripe\Core\Injector\Injector:
   Symbiote\SqsJobQueue\Service\SqsService:
@@ -169,7 +169,7 @@ SilverStripe\Core\Injector\Injector:
         version: latest
 ---
 Name: dev_sqs
-After: sqs-jobqueue
+After: '#sqs_config'
 Only:
   environment: test
 ---
@@ -199,8 +199,7 @@ SilverStripe\Core\Injector\Injector:
       queueName: %sqs_jobqueue_name%
 ---
 Name: sqs_location
-After:
-  - sqs-jobqueue
+After: '#sqs_config'
 ---
 SilverStripe\Core\Injector\Injector:
   Symbiote\SqsJobQueue\Service\FileBasedSqsQueue:
