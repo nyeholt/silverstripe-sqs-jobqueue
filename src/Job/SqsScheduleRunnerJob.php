@@ -39,7 +39,10 @@ class SqsScheduleRunnerJob implements SqsIntervalTask {
 
 
     public function processScheduledJobs() {
-        $this->queuedJobService->checkJobHealth();
+        $this->queuedJobService->checkJobHealth(array(
+                QueuedJob::QUEUED, 
+                SqsQueuedJobExtension::TYPE_SCHEDULED
+        ));
 
         $processedWaiting = false;
         // run waiting jobs that haven't been re-added to the queue
