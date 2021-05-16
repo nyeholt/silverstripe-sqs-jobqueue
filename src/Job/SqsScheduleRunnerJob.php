@@ -5,15 +5,9 @@ namespace Symbiote\SqsJobQueue\Job;
 
 use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
 use Symbiote\QueuedJobs\Services\QueuedJob;
-
-
 use SilverStripe\ORM\FieldType\DBDatetime;
-use Symbiote\SqsJobQueue\Job\SqsScheduleRunnerJob;
 use Symbiote\SqsJobQueue\Extension\SqsQueuedJobExtension;
 use Symbiote\SqsJobQueue\Task\SqsIntervalTask;
-
-
-
 /**
  * A job that executes _scheduled_ jobs in an environment
  * where simple queues exist that don't allow long term scheduling of jobs,
@@ -39,7 +33,11 @@ class SqsScheduleRunnerJob implements SqsIntervalTask {
 
 
     public function processScheduledJobs() {
-        $this->queuedJobService->checkJobHealth();
+        $this->queuedJobService->checkJobHealth(array(
+                QueuedJob::QUEUED,
+                QueuedJob::LARGE, 
+                SqsQueuedJobExtension::TYPE_SCHEDULED
+        ));
 
         $processedWaiting = false;
         // run waiting jobs that haven't been re-added to the queue
