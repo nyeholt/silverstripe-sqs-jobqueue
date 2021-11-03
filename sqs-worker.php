@@ -85,7 +85,7 @@ $runningFunction = function ($logFunc, $perpetual = true) {
 
         try {
             $executed = $service->readQueue();
-            if (count($executed)) {
+            if ($executed && is_array($executed) && count($executed)) {
                 foreach ($executed as $job) {
                     $logFunc("Ran {$job['name']} - {$job['method']}");
                     $memory = memory_get_peak_usage(false);
