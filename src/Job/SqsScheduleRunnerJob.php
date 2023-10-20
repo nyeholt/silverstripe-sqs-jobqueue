@@ -32,10 +32,10 @@ class SqsScheduleRunnerJob implements SqsIntervalTask {
     public $sqsService;
 
 
-    public function processScheduledJobs() {
+    public function processScheduledJobs($message = '', $handler = '') {
         $this->queuedJobService->checkJobHealth(array(
                 QueuedJob::QUEUED,
-                QueuedJob::LARGE, 
+                QueuedJob::LARGE,
                 SqsQueuedJobExtension::TYPE_SCHEDULED
         ));
 
