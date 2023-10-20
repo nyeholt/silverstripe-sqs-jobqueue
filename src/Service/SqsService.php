@@ -218,9 +218,9 @@ class SqsService {
                 }
 
                 // let's see if the dates are okay.
-                $lastQueueRun = strtotime($state->WorkerRun);
-                $lastScheduleRun = strtotime($state->LastScheduledStart);
-                $lastAdded = strtotime($state->LastAddedScheduleJob);
+                $lastQueueRun = strtotime($state->WorkerRun ?? '');
+                $lastScheduleRun = strtotime($state->LastScheduledStart ?? '');
+                $lastAdded = strtotime($state->LastAddedScheduleJob ?? '');
 
                 $a = $state->WorkerRun;
                 $b = $state->LastScheduledStart;
