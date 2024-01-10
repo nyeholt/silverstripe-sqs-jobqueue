@@ -17,12 +17,12 @@
     },
 	"extra": {
 		"branch-alias": {
-			"dev-master": "3.3.x-dev"
+			"dev-master": "3.5.x-dev"
 		}
 	},
 	"require":
 	{
-		"aws/aws-sdk-php": "~3.0"
+		"aws/aws-sdk-php": ">3.288.1"
 	}
 }
 
