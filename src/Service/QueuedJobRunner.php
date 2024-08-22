@@ -2,23 +2,18 @@
 
 namespace Symbiote\SqsJobQueue\Service;
 
-
 use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
 use Symbiote\QueuedJobs\Services\QueuedJob;
 
-
-
 /**
  * A shell around QueuedJobService that performs some additional sanity checks before
- * executing things. 
+ * executing things.
  *
  * @author marcus
  */
 class QueuedJobRunner
 {
-
     /**
-     *
      * @var QueuedJobService
      */
     public $queuedJobService;
@@ -34,5 +29,4 @@ class QueuedJobRunner
             return $this->queuedJobService->runJob($jobId);
         }
     }
-
 }

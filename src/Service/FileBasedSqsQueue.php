@@ -2,27 +2,23 @@
 
 namespace Symbiote\SqsJobQueue\Service;
 
-
-
-
 /**
  * @author marcus
  */
 class FileBasedSqsQueue
 {
-    const SYS_KEY = '__src_system';
+    public const SYS_KEY = '__src_system';
 
     public $queuePath;
 
     public function __construct()
     {
-        
     }
 
     protected function getQueuePath()
     {
         if (!$this->queuePath) {
-            $this->queuePath = __DIR__.'/.queues';
+            $this->queuePath = __DIR__ . '/.queues';
         }
         if (!is_dir($this->queuePath)) {
             mkdir($this->queuePath, 02770, true);
@@ -45,12 +41,12 @@ class FileBasedSqsQueue
 
         $name = md5($data);
 
-        file_put_contents($path.'/'.$name, $data);
+        file_put_contents($path . '/' . $name, $data);
     }
 
     public function receiveMessage($params = [])
     {
-        $messages = glob($this->getQueuePath().'/*');
+        $messages = glob($this->getQueuePath() . '/*');
         $all = new FileBasedSqsMessageList();
         foreach ($messages as $file) {
             $content = file_get_contents($file);
@@ -67,31 +63,12 @@ class FileBasedSqsQueue
         }
         return $all;
     }
-    
-    public function deleteMessage($params) {
-        $file = isset($params['ReceiptHandle']) ? $params['ReceiptHandle'] : null;
-        if ($file && file_exists($file) && strpos($file, $this->getQueuePath()) !== false) {
+
+    public function deleteMessage($params)
+    {
+        $file = $params['ReceiptHandle'] ?? null;
+        if ($file && file_exists($file) && str_contains((string) $file, (string) $this->getQueuePath())) {
             unlink($file);
         }
-    }
-    
-}
-
-class FileBasedSqsMessageList {
-    protected $messages = [];
-
-    public function __construct() {
-
-    }
-
-    public function add($msg) {
-        $this->messages[] = $msg;
-    }
-
-    public function get($key) {
-        if ($key === 'Messages') {
-            return $this->messages;
-        }
-        return $key;
     }
 }

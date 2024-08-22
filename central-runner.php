@@ -13,7 +13,7 @@ $settings = [
     'queuePath' => '/var/www/html/mysite/fake-sqs-queues',
 ];
 
-$localConfig = __DIR__.'/runner-settings.php';
+$localConfig = __DIR__ . '/runner-settings.php';
 if (file_exists($localConfig)) {
     $local    = include $localConfig;
     $settings = array_replace_recursive($settings, $local);
@@ -21,7 +21,7 @@ if (file_exists($localConfig)) {
 
 
 $loggingFunction = function ($message) {
-    echo "[" . date('Y-m-d H:i:s') . "] " . $message ."\n";
+    echo "[" . date('Y-m-d H:i:s') . "] " . $message . "\n";
 };
 
 $path = $settings['queuePath'];
@@ -43,11 +43,10 @@ $runningFunction = function ($logFunc, $path) {
         while ($i++ < $executions) {
             clearstatcache(true);
             try {
-
-                $messages = glob($path.'/*');
+                $messages = glob($path . '/*');
 
                 foreach ($messages as $file) {
-                    $attempts = isset($fileAttempts[$file]) ? $fileAttempts[$file] : 0;
+                    $attempts = $fileAttempts[$file] ?? 0;
                     if ($attempts >= PER_FILE_THRESHOLD) {
                         $logFunc("Failed executing file $file, removing");
                         unset($fileAttempts[$file]);
@@ -59,13 +58,12 @@ $runningFunction = function ($logFunc, $path) {
                     $fileAttempts[$file] = ++$attempts;
 
                     $content = file_get_contents($file);
-                    $logFunc("Saw $file ".SYS_KEY . " (in cycle $i )");
+                    $logFunc("Saw $file " . SYS_KEY . " (in cycle $i )");
                     if (strlen($content)) {
                         $data   = json_decode($content, true);
-                        $sqsCmd = $data[SYS_KEY].'/'.SQS_PATH;
-                        if (isset($data[SYS_KEY]) && file_exists($data[SYS_KEY].'/'.SQS_PATH)) {
-
-                            $cmd = "php ".$data[SYS_KEY].'/'.SQS_PATH.' once=1';
+                        $sqsCmd = $data[SYS_KEY] . '/' . SQS_PATH;
+                        if (isset($data[SYS_KEY]) && file_exists($data[SYS_KEY] . '/' . SQS_PATH)) {
+                            $cmd = "php " . $data[SYS_KEY] . '/' . SQS_PATH . ' once=1';
 
                             $logFunc("Executing $cmd");
 
@@ -82,12 +80,12 @@ $runningFunction = function ($logFunc, $path) {
                     }
                 }
             } catch (Exception $ex) {
-                $logFunc("Queue read failed (".get_class($ex)."): ".$ex->getMessage()."\n");
+                $logFunc("Queue read failed (" . $ex::class . "): " . $ex->getMessage() . "\n");
                 echo($ex->getTraceAsString());
-                $logFunc( "\n");
+                $logFunc("\n");
 
-                if (strpos($ex->getMessage(), "Couldn't run query") !== false) {
-                    $logFunc( "Unrecoverable failure, closing for restart\n");
+                if (str_contains($ex->getMessage(), "Couldn't run query")) {
+                    $logFunc("Unrecoverable failure, closing for restart\n");
                     return;
                 }
             }
