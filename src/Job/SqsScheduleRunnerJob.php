@@ -2,12 +2,12 @@
 
 namespace Symbiote\SqsJobQueue\Job;
 
-
+use SilverStripe\ORM\FieldType\DBDatetime;
 use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
 use Symbiote\QueuedJobs\Services\QueuedJob;
-use SilverStripe\ORM\FieldType\DBDatetime;
 use Symbiote\SqsJobQueue\Extension\SqsQueuedJobExtension;
 use Symbiote\SqsJobQueue\Task\SqsIntervalTask;
+
 /**
  * A job that executes _scheduled_ jobs in an environment
  * where simple queues exist that don't allow long term scheduling of jobs,
@@ -15,9 +15,10 @@ use Symbiote\SqsJobQueue\Task\SqsIntervalTask;
  *
  * @author marcus
  */
-class SqsScheduleRunnerJob implements SqsIntervalTask {
+class SqsScheduleRunnerJob implements SqsIntervalTask
+{
 
-    const SCHEDULE_TIME = 45;
+    public const SCHEDULE_TIME = 45;
 
     /**
      *
@@ -32,19 +33,20 @@ class SqsScheduleRunnerJob implements SqsIntervalTask {
     public $sqsService;
 
 
-    public function processScheduledJobs($message = '', $handler = '') {
-        $this->queuedJobService->checkJobHealth(array(
-                QueuedJob::QUEUED,
-                QueuedJob::LARGE,
-                SqsQueuedJobExtension::TYPE_SCHEDULED
-        ));
+    public function processScheduledJobs($message = '', $handler = '')
+    {
+        $this->queuedJobService->checkJobHealth([
+            QueuedJob::QUEUED,
+            QueuedJob::LARGE,
+            SqsQueuedJobExtension::TYPE_SCHEDULED
+        ]);
 
         $processedWaiting = false;
         // run waiting jobs that haven't been re-added to the queue
-        $jobs = QueuedJobDescriptor::get()->filter(array(
-            'JobStatus' => array(QueuedJob::STATUS_WAIT),
-            'Implementation:not' => SqsScheduleRunnerJob::class,
-        ));
+        $jobs = QueuedJobDescriptor::get()->filter([
+            'JobStatus' => [QueuedJob::STATUS_WAIT],
+            'Implementation:not' => SqsScheduleRunnerJob::class
+        ]);
 
         foreach ($jobs as $job) {
             $processedWaiting = true;
@@ -54,12 +56,12 @@ class SqsScheduleRunnerJob implements SqsIntervalTask {
         }
 
         if (!$processedWaiting) {
-            $jobs = QueuedJobDescriptor::get()->filter(array(
-                'JobStatus' => array(QueuedJob::STATUS_NEW, QueuedJob::STATUS_WAIT),
-                'JobType'       =>  SqsQueuedJobExtension::TYPE_SCHEDULED,
+            $jobs = QueuedJobDescriptor::get()->filter([
+                'JobStatus' => [QueuedJob::STATUS_NEW, QueuedJob::STATUS_WAIT],
+                'JobType' => SqsQueuedJobExtension::TYPE_SCHEDULED,
                 'Implementation:not' => SqsScheduleRunnerJob::class,
                 'StartAfter:LessThan' => DBDatetime::now()->getValue()
-            ));
+            ]);
 
             foreach ($jobs as $job) {
                 // bombs away!
@@ -78,5 +80,4 @@ class SqsScheduleRunnerJob implements SqsIntervalTask {
     {
         return SqsScheduleRunnerJob::class;
     }
-
 }

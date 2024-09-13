@@ -2,22 +2,17 @@
 
 namespace Symbiote\SqsJobQueue\Extension;
 
-
-use SilverStripe\Forms\Form;
-use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
-use SilverStripe\Forms\GridField\GridFieldDetailForm;
 use SilverStripe\Core\Extension;
-
-
+use SilverStripe\Forms\Form;
+use SilverStripe\Forms\GridField\GridFieldDetailForm;
+use Symbiote\QueuedJobs\DataObjects\QueuedJobDescriptor;
 
 /**
- * 
- *
  * @author marcus
  */
 class SqsQueuedJobExtension extends Extension
 {
-    const TYPE_SCHEDULED = 'Scheduled';
+    public const TYPE_SCHEDULED = 'Scheduled';
 
     public function updateEditForm(Form $form)
     {

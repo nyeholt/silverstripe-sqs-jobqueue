@@ -5,11 +5,14 @@
 	"keywords": ["symbiote", "thrive", "silverstripe", "sqs", "aws", "queuedjobs"],
 	"license": "BSD-3-Clause",
 	"authors": [
-	{
-		"name": "Marcus Nyeholt",
-		"email": "marcus@symbiote.com.au"
-	}
+        {
+            "name": "Marcus Nyeholt",
+            "email": "marcus@symbiote.com.au"
+        }
 	],
+    "require": {
+        "aws/aws-sdk-php": "^3.320.0"
+    },
     "autoload": {
         "psr-4": {
             "Symbiote\\SqsJobQueue\\": "src/"
@@ -19,10 +22,6 @@
 		"branch-alias": {
 			"dev-master": "3.3.x-dev"
 		}
-	},
-	"require":
-	{
-		"aws/aws-sdk-php": "~3.0"
 	}
 }
 

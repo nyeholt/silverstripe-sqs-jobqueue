@@ -23,7 +23,7 @@ SilverStripe\Core\Injector\Injector:
   QueueHandler:
     class: Symbiote\SqsJobQueue\Service\SqsQueueHandler
     properties:
-      sqsService: %$SqsService
+      sqsService: '%$SqsService'
   SqsClient:
     class: Aws\Sqs\SqsClient
     constructor:
@@ -133,7 +133,7 @@ After: '#sqs_config'
 SilverStripe\Core\Injector\Injector:
   SqsService:
     properties:
-      client: %$FileSqsClient
+      client: '%$FileSqsClient'
   FileSqsClient:
     class: Symbiote\SqsJobQueue\Service\FileBasedSqsQueue
 
@@ -193,10 +193,10 @@ SilverStripe\Core\Injector\Injector:
   QueueHandler:
     class: Symbiote\SqsJobQueue\Service\SqsQueueHandler
     properties:
-      sqsService: %$Symbiote\SqsJobQueue\Service\SqsService
+      sqsService: '%$Symbiote\SqsJobQueue\Service\SqsService'
   Symbiote\SqsJobQueue\Service\SqsService:
     properties:
-      queueName: %sqs_jobqueue_name%
+      queueName: '%sqs_jobqueue_name%'
 ---
 Name: sqs_location
 After: '#sqs_config'

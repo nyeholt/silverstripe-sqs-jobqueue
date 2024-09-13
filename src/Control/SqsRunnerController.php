@@ -50,20 +50,19 @@ class SqsRunnerController extends Controller
             }
 
             $fileLoc = $service->client instanceof FileBasedSqsQueue ? $service->client->queuePath : '';
-            $logFunc("No jobs found in " . get_class($service->client) . ': ' . $fileLoc);
+            $logFunc("No jobs found in " . $service->client::class . ': ' . $fileLoc);
 
             if ($perpetual) {
                 $service->checkScheduledTasks();
             }
 
             return "";
-
         } catch (Exception $ex) {
-            echo "Queue read failed (" . get_class($ex) . "): " . $ex->getMessage() . "\n";
+            echo "Queue read failed (" . $ex::class . "): " . $ex->getMessage() . "\n";
             echo $ex->getTraceAsString();
             echo "\n";
 
-            if (strpos($ex->getMessage(), "Couldn't run query") !== false) {
+            if (str_contains($ex->getMessage(), "Couldn't run query")) {
                 echo "Unrecoverable failure, closing for restart\n";
                 return;
             }

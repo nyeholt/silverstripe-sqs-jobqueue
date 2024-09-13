@@ -2,22 +2,17 @@
 
 namespace Symbiote\SqsJobQueue\Service;
 
-
-use SilverStripe\ORM\FieldType\DBDatetime;
 use Exception;
-
-
+use SilverStripe\ORM\FieldType\DBDatetime;
 use Symbiote\SqsJobQueue\Model\SqsQueueState;
 use Symbiote\SqsJobQueue\Task\SqsIntervalTask;
-
-
 
 /**
  * @author marcus
  */
-class SqsService {
-
-    const MAX_DEPTH = 10;
+class SqsService
+{
+    public const MAX_DEPTH = 10;
 
     /**
      *
@@ -27,40 +22,41 @@ class SqsService {
     public $queueName = 'jobqueue';
     public $queueUrl;
 
-
     /**
      * A map of handlers for messages that get sent. maps the message name to the
      * object that handles that message (as a method)
      *
      * @var array
      */
-    public $handlers = array();
+    public $handlers = [];
 
     /**
      * The list of tasks that the system will track as being regularly self triggered
      *
      * @var array
      */
-    public $defaultTasks = array();
+    public $defaultTasks = [];
 
-    public function __call($name, $arguments) {
-        $message = array('args' => $arguments);
+    public function __call($name, $arguments)
+    {
+        $message = ['args' => $arguments];
         return $this->sendSqsMessage($message, $name);
     }
 
-    public function sendSqsMessage($message, $handler, $delay = 0) {
+    public function sendSqsMessage($message, $handler, $delay = 0)
+    {
         if (!is_array($message)) {
-            $message = array('message' => $message);
+            $message = ['message' => $message];
         }
 
         if (!isset($message['handler'])) {
             $message['handler'] = $handler;
         }
 
-        $properties = array(
+        $properties = [
             'QueueUrl' => $this->getQueueUrl(),
             'MessageBody' => json_encode($message)
-        );
+        ];
 
         if ($delay > 0) {
             $properties['DelaySeconds'] = $delay;
@@ -69,31 +65,31 @@ class SqsService {
         $this->client->sendMessage($properties);
     }
 
-    protected function getQueueUrl() {
+    protected function getQueueUrl()
+    {
         if (!$this->queueUrl) {
-            $result = $this->client->getQueueUrl(array('QueueName' => $this->queueName));
+            $result = $this->client->getQueueUrl(['QueueName' => $this->queueName]);
             $this->queueUrl = $result->get('QueueUrl');
         }
         return $this->queueUrl;
     }
 
-    public function readQueue($number = 0) {
+    public function readQueue($number = 0)
+    {
         if ($number++ >= self::MAX_DEPTH) {
             return [];
         }
 
-        $result = $this->client->receiveMessage(array(
-            'QueueUrl' => $this->getQueueUrl(),
-        ));
+        $result = $this->client->receiveMessage(['QueueUrl' => $this->getQueueUrl()]);
 
         $messageBody = null;
-        $jobs = array();
+        $jobs = [];
         if ($result && $messages = $result->get('Messages')) {
             foreach ($messages as $message) {
                 $workException = null;
                 // Do something with the message
                 $messageBody = $message['Body'];
-                $data = json_decode($message['Body'], true);
+                $data = json_decode((string) $message['Body'], true);
 
                 if ($data && isset($data['handler'])) {
                     if (isset($data['message'])) {
@@ -101,17 +97,17 @@ class SqsService {
                     }
 
                     $name = $data['handler'];
-                    $handler = isset($this->handlers[$name]) ? $this->handlers[$name] : $this;
+                    $handler = $this->handlers[$name] ?? $this;
                     $method = method_exists($handler, $name) ? $name : 'handleCall';
                     if (!method_exists($handler, $method)) {
                         $handler = $this;
                         $method = 'handleCall';
                     }
-                    $args = isset($data['args']) ? $data['args'] : $data;
-                    $jobs[$message['ReceiptHandle']] = array(
-                        'name' => get_class($handler),
-                        'method'    => $message['Body'],
-                    );
+                    $args = $data['args'] ?? $data;
+                    $jobs[$message['ReceiptHandle']] = [
+                        'name' => $handler::class,
+                        'method' => $message['Body']
+                    ];
 
                     try {
                         // check whether this handler should be restarted; we add immediately
@@ -120,16 +116,16 @@ class SqsService {
                             $this->sendSqsMessage($handler->getTaskName(), $method, $handler->getInterval());
                         }
 
-                        call_user_func_array(array($handler, $method), $args);
+                        call_user_func_array([$handler, $method], $args);
                     } catch (Exception $ex) {
                         $workException = $ex;
                     }
                 }
 
-                $this->client->deleteMessage(array(
+                $this->client->deleteMessage([
                     'QueueUrl' => $this->getQueueUrl(),
-                    'ReceiptHandle' => $message['ReceiptHandle'],
-                ));
+                    'ReceiptHandle' => $message['ReceiptHandle']
+                ]);
 
                 if ($workException) {
                     throw $workException;
@@ -152,7 +148,8 @@ class SqsService {
      *
      * @param string $name
      */
-    protected function updateTaskState($name) {
+    protected function updateTaskState($name)
+    {
         $state = SqsQueueState::get()->filter('Title', $name)->first();
         if ($state && $state->ID) {
             $state->WorkerRun = date('Y-m-d H:i:s');
@@ -169,7 +166,8 @@ class SqsService {
      *
      * @return boolean
      */
-    protected function canRestartTask($task) {
+    protected function canRestartTask($task)
+    {
         if ($task instanceof SqsIntervalTask) {
             $state = SqsQueueState::get()->filter('Title', $task->getTaskName())->first();
 
@@ -185,9 +183,7 @@ class SqsService {
                     return false;
                 }
             } else {
-                $state = SqsQueueState::create(array(
-                    'Title'     => $task->getTaskName(),
-                ));
+                $state = SqsQueueState::create(['Title'     => $task->getTaskName()]);
             }
 
             $state->LastScheduledStart = $now;
@@ -201,7 +197,8 @@ class SqsService {
     /**
      * Checks through all the scheduled tasks that are expected to exist
      */
-    public function checkScheduledTasks() {
+    public function checkScheduledTasks()
+    {
         if (count($this->defaultTasks)) {
             $now = DBDatetime::now()->Format(DBDatetime::ISO_DATETIME);
 
@@ -210,9 +207,7 @@ class SqsService {
 
                 $new = false;
                 if (!$state) {
-                    $state = SqsQueueState::create(array(
-                        'Title' => $task
-                    ));
+                    $state = SqsQueueState::create(['Title' => $task]);
                     $new = true;
                     $state->write();
                 }
@@ -236,7 +231,8 @@ class SqsService {
         }
     }
 
-    public function handleCall($args) {
+    public function handleCall($args)
+    {
         if (!count($args)) {
             return;
         }
@@ -251,5 +247,4 @@ class SqsService {
 //            }
 //        }
     }
-
 }

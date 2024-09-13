@@ -55,7 +55,7 @@ $loggingFunction("Initialising SqsWorker");
 /**
  * Closure to provide a small level of global scope protection
  */
-$runningFunction = function ($logFunc)  {
+$runningFunction = function ($logFunc) {
     $logFunc("Running");
 
     if (isset($_SERVER['argv'][1])) {

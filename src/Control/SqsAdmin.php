@@ -2,29 +2,29 @@
 
 namespace Symbiote\SqsJobQueue\Control;
 
-
+use SilverStripe\Admin\ModelAdmin;
+use SilverStripe\Forms\Form;
+use SilverStripe\Forms\FormAction;
 use SilverStripe\Forms\GridField\GridFieldAddNewButton;
 use SilverStripe\Forms\GridField\GridFieldDeleteAction;
 use SilverStripe\Forms\ReadonlyField;
-use SilverStripe\Forms\FormAction;
-use SilverStripe\Forms\Form;
-use SilverStripe\Admin\ModelAdmin;
-
-use Symbiote\SqsJobQueue\Model\SqsQueueState;
 use Symbiote\SqsJobQueue\Job\SqsScheduleRunnerJob;
+use Symbiote\SqsJobQueue\Model\SqsQueueState;
 use Symbiote\SqsJobQueue\Service\SqsService;
-
-
 
 /**
  * @author marcus
  */
-class SqsAdmin extends ModelAdmin {
+class SqsAdmin extends ModelAdmin
+{
     private static $url_segment = 'sqsadmin';
-    private static $managed_models = array(SqsQueueState::class);
+    private static $managed_models = [
+        SqsQueueState::class
+    ];
     private static $menu_title = 'SQS';
 
-    public function getEditForm($id = null, $fields = null) {
+    public function getEditForm($id = null, $fields = null)
+    {
         $form = parent::getEditForm($id, $fields);
 
         if ($this->modelClass == SqsQueueState::class) {
@@ -39,9 +39,7 @@ class SqsAdmin extends ModelAdmin {
             $sqs = SqsQueueState::get()->filter('Title', SqsScheduleRunnerJob::class)->first();
             if (!$sqs) {
                 $sqs = SqsQueueState::create();
-                $sqs->update(array(
-                    'Title' => SqsScheduleRunnerJob::class
-                ));
+                $sqs->update(['Title' => SqsScheduleRunnerJob::class]);
                 $sqs->write();
             }
 
@@ -63,12 +61,12 @@ class SqsAdmin extends ModelAdmin {
             if ($addTrigger) {
                 $form->Actions()->push(FormAction::create('triggerSqsJob', 'Check default SQS jobs'));
             }
-
         }
         return $form;
     }
 
-    public function triggerSqsJob($data, Form $form) {
+    public function triggerSqsJob($data, Form $form)
+    {
         singleton(SqsService::class)->checkScheduledTasks();
         return $this->redirectBack();
     }
